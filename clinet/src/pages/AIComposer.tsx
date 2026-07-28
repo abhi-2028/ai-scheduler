@@ -1,9 +1,7 @@
-import React from 'react'
+import React from 'react';
 
 const AIComposer = () => {
-  return (
-    <div>AIComposer</div>
-  )
-}
+  return <div>AIComposer</div>;
+};
 
-export default AIComposer
+export default AIComposer;

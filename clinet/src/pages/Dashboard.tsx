@@ -4,11 +4,15 @@ import {
   Share2Icon,
   TrendingUpIcon,
   ActivityIcon,
-  SendIcon
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { data } from "react-router-dom";
-import { dummyAccountsData, dummyActivityData, dummyPostsData } from "../assets/assets";
+  SendIcon,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { data } from 'react-router-dom';
+import {
+  dummyAccountsData,
+  dummyActivityData,
+  dummyPostsData,
+} from '../assets/assets';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -19,48 +23,50 @@ const Dashboard = () => {
 
   const [activites, setActivities] = useState<any[]>([]);
 
-useEffect(() => {
-  const fetchDashboardData = async () => {
-    try {
-      const [postsRes, accountsRes, activityRes] = [
-        { data: dummyPostsData },
-        { data: dummyAccountsData },
-        { data: dummyActivityData },
-      ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [postsRes, accountsRes, activityRes] = [
+          { data: dummyPostsData },
+          { data: dummyAccountsData },
+          { data: dummyActivityData },
+        ];
 
-      const posts = postsRes.data;
-      setStats({
-        scheduled: posts.filter((p: any) => p.status === "scheduled").length,
-        published: posts.filter((p: any) => p.status === "published").length,
-        connectedAccounts: accountsRes.data.filter((a: any) => a.status === "published").length
-      })
-      setActivities(activityRes.data)
-    } catch (err: any) {
-      console.error("Error fetching dashboard data: ", err);
-    }
-  };
+        const posts = postsRes.data;
+        setStats({
+          scheduled: posts.filter((p: any) => p.status === 'scheduled').length,
+          published: posts.filter((p: any) => p.status === 'published').length,
+          connectedAccounts: accountsRes.data.filter(
+            (a: any) => a.status === 'published'
+          ).length,
+        });
+        setActivities(activityRes.data);
+      } catch (err: any) {
+        console.error('Error fetching dashboard data: ', err);
+      }
+    };
 
-  fetchDashboardData();
-}, []);
+    fetchDashboardData();
+  }, []);
 
   const statCards = [
     {
-      label: "Scheduled Posts",
+      label: 'Scheduled Posts',
       value: stats.scheduled,
       icon: ClockIcon,
-      trend: "+2 today",
+      trend: '+2 today',
     },
     {
-      label: "Published Posts",
+      label: 'Published Posts',
       value: stats.published,
       icon: CheckCircleIcon,
-      trend: "All time",
+      trend: 'All time',
     },
     {
-      label: "Connected Accounts",
+      label: 'Connected Accounts',
       value: stats.connectedAccounts,
       icon: Share2Icon,
-      trend: "Active",
+      trend: 'Active',
     },
   ];
 
@@ -101,30 +107,43 @@ useEffect(() => {
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="text-slate-900">Recent Activity</h2>
-          <span className="text-sm text-slate-400">{activites.length} events</span>
+          <span className="text-sm text-slate-400">
+            {activites.length} events
+          </span>
         </div>
 
         {activites.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <div className="size-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
-              <ActivityIcon className="size-6 text-slate-400"/>
+              <ActivityIcon className="size-6 text-slate-400" />
             </div>
             <p className="text-slate-500">No activity yet</p>
-            <p className="text-slate-400 text-sm mt-1">Connect accounts and schedule posts to see events here.</p>
+            <p className="text-slate-400 text-sm mt-1">
+              Connect accounts and schedule posts to see events here.
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
             {activites.map((activity) => (
-              <div key={activity._id} className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+              <div
+                key={activity._id}
+                className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
+              >
                 <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-zinc-100 text-zinc-600">
-                  <SendIcon className="size-4"/>
+                  <SendIcon className="size-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">Published</span>
-                    <span className="text-xs text-slate-400 shrink-0">{new Date(activity.createdAt).toLocaleString()}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                      Published
+                    </span>
+                    <span className="text-xs text-slate-400 shrink-0">
+                      {new Date(activity.createdAt).toLocaleString()}
+                    </span>
                   </div>
-                    <p className="text-sm text-slate-600">{activity.description}</p>
+                  <p className="text-sm text-slate-600">
+                    {activity.description}
+                  </p>
                 </div>
               </div>
             ))}
