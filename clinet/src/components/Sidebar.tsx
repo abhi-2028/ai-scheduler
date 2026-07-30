@@ -5,7 +5,6 @@ import {
   UserIcon,
   Wand2Icon,
 } from 'lucide-react';
-import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 const Sidebar = ({
@@ -20,8 +19,8 @@ const Sidebar = ({
       window.location.href = '/';
     },
     user: {
-      name: 'John Doe',
-      email: 'johndoe@example.com',
+      name: 'Abhirup Biswas',
+      email: 'abhirup@example.com',
     },
   };
 
