@@ -9,7 +9,7 @@ export default function Navbar() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 <Link to="/" onClick={() => scrollTo(0, 0)} className="flex items-center gap-2 ">
                     <img src="/logo.svg" alt="logo" className="size-7" />
-                    <span className="text-xl lg:text-2xl font-medium font-serif text-slate-800">Scheduler</span>
+                    <span className="text-xl lg:text-2xl font-medium font-serif text-slate-800">Nexora</span>
                 </Link>
                 <div className="hidden md:flex items-center gap-8 text-sm text-slate-500">
                     <a href="#features" className="hover:text-slate-900">
