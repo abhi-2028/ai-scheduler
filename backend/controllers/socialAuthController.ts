@@ -9,37 +9,46 @@ import { AuthRequest } from "../middlewares/authMiddleware.js";
 
 // to Ensure user has a zernio profile
 const getOrCreateZernioProfile = async (user: any): Promise<string> => {
-
-    try{
-        const result = await zernio.profiles.listProfiles();
-    
-        const data = result.data as any;
-    
-        const profiles: any[] = Array.isArray(data) ? data : data?.profiles || data?.data || [];
-    
-        if(profiles.length > 0) {
-            const pid = profiles[0]._id || profiles[0].id;
-            await User.findByIdAndUpdate(user._id, { zernioProfileId: pid });
-            return pid; 
+    try {
+        if (user?.zernioProfileId) {
+            return user.zernioProfileId;
         }
-    
+
+        const result = await zernio.profiles.listProfiles();
+
+        const data = result.data as any;
+        const profiles: any[] = Array.isArray(data) ? data : data?.profiles || data?.data || [];
+
+        const existingProfile = profiles.find((profile: any) => {
+            const profileUserId = profile?.userId || profile?.user_id;
+            return profileUserId && String(profileUserId) === String(user._id);
+        });
+
+        const pid = existingProfile?._id || existingProfile?.id || user.zernioProfileId;
+
+        if (pid) {
+            await User.findByIdAndUpdate(user._id, { zernioProfileId: pid });
+            return pid;
+        }
+
         const createResult = await zernio.profiles.createProfile({
             body: {
                 name: `${user.name || user.email}'s workspace` as any,
+                userId: user._id,
             }
         });
-    
+
         const created = (createResult.data as any)?.profile || createResult.data;
-    
-        const pid = created?._id || created?.id;
-    
-        if(!pid) {
+
+        const createdPid = created?._id || created?.id;
+
+        if (!createdPid) {
             throw new ApiError(500, 'Failed to create Zernio profile - no ID returned');
         }
-    
-        await User.findByIdAndUpdate(user._id, { zernioProfileId: pid });
-        return pid;
-    }catch(error: any) {
+
+        await User.findByIdAndUpdate(user._id, { zernioProfileId: createdPid });
+        return createdPid;
+    } catch (error: any) {
         console.error('Error in getOrCreateZernioProfile:', error);
         throw new ApiError(500, 'Failed to get or create Zernio profile');
     }
