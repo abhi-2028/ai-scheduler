@@ -19,7 +19,7 @@ const postSchema = new mongoose.Schema({
     },
     platform: {
         type: String,
-        enum: ['twitter', 'linkedin', 'facebook', 'instagram'],
+        enum: ['twitter', 'linkedin', 'facebook', 'instagram', 'facebook_page', 'linkedin_page', 'instagram_business'],
     },
     scheduledFor: {
         type: Date,
