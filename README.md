@@ -1,119 +1,83 @@
 # AI Scheduler
 
-AI Scheduler is a social content planning tool that helps creators turn ideas into ready-to-schedule posts faster. It combines an AI composer, a dashboard, connected accounts, and a scheduling workflow in one place.
+AI Scheduler is a social content planning tool that helps creators turn ideas into ready-to-schedule posts. It combines AI-assisted writing, media generation, connected social accounts, scheduling, and activity tracking in one workflow.
 
-## Problem Statement
+## Features
 
-Content creators often spend too much time switching between tools to brainstorm ideas, write captions, adapt content for different platforms, and plan when posts should go live. That extra effort makes it harder to stay consistent, post on time, and keep a clear view of what has already been created or scheduled.
+- Generate social media captions from a prompt and selected tone.
+- Optionally generate and persist an AI image for a post.
+- Connect and manage supported social accounts through Zernio.
+- Schedule posts with optional image or video uploads.
+- Review generated content, scheduled posts, dashboard metrics, and recent activity.
 
-AI Scheduler is meant to reduce that friction by giving creators one workflow for:
+## Project Documentation
 
-- generating post ideas and captions
-- previewing recent content drafts
-- managing connected social accounts
-- scheduling content for a later time
-- tracking activity from one dashboard
+The project is split into two independently runnable applications:
 
-## Why This Helps Content Creators
+- [Client documentation](client/README.md): React routes, components, setup commands, and frontend integration notes.
+- [Backend documentation](backend/README.md): Express structure, environment variables, authentication, and API reference.
 
-This project is especially useful for content creators, social media managers, and small teams that need to publish regularly without building a large operations process.
+Read the backend README before starting the API because it contains the required environment variables and third-party service configuration.
 
-It helps by:
-
-- saving time on drafting content
-- making it easier to stay consistent across platforms
-- reducing context switching between writing, planning, and scheduling tools
-- giving a simple view of scheduled and published posts
-- helping creators move from idea to published post with fewer steps
-
-## How It Works
-
-The app is split into two main parts:
-
-- `client/` contains the React front end built with Vite.
-- `backend/` contains a small Express server that can be extended for APIs, persistence, or AI integrations.
-
-The current flow is:
-
-1. Open the landing page and sign in or continue into the app.
-2. Use the AI Composer to enter a prompt, choose a tone, and generate content.
-3. Review recent generations and select one to schedule.
-4. Choose the platforms, date, and time for publishing.
-5. Check the dashboard for post counts, connected accounts, and recent activity.
-
-## Quick Guide
+## Quick Start
 
 ### Prerequisites
 
-- Node.js installed
-- npm installed
+- Node.js and npm
+- MongoDB connection
+- Backend API keys listed in [backend/README.md](backend/README.md)
 
-### 1. Install dependencies
+### Install dependencies
 
-Install packages for both the client and backend.
+Open two terminals from the repository root:
+
+```bash
+cd backend
+npm install
+```
 
 ```bash
 cd client
 npm install
-
-cd ../backend
-npm install
 ```
 
-### 2. Start the backend
+### Start the applications
 
-From the `backend/` folder:
+Start the backend:
 
 ```bash
+cd backend
 npm run start
 ```
 
-This starts the Express server and serves a simple health response at the root route.
-
-### 3. Start the client
-
-From the `client/` folder:
+Start the client in a second terminal:
 
 ```bash
+cd client
 npm run dev
 ```
 
-Open the local Vite URL shown in the terminal to view the app.
+Open the local Vite URL shown in the client terminal. The backend health check is available at `http://localhost:3000/` unless `PORT` is changed.
 
-### 4. Explore the main pages
+## Typical Workflow
 
-- Home: landing page and product overview
-- Login: entry point for authenticated use
-- Dashboard: post metrics and recent activity
-- Accounts: connected social accounts
-- AI Composer: content generation and scheduling flow
-- Scheduler: planning and scheduling interface
+1. Open the landing page and sign in or register.
+2. Enter an idea in the AI Composer and choose a tone.
+3. Generate and review a post, optionally including an image.
+4. Select connected platforms, a date, and a time.
+5. Review scheduled content and activity from the dashboard.
 
-### 5. Typical usage flow
-
-1. Write a short idea in the AI Composer.
-2. Pick a tone that matches your brand voice.
-3. Generate a post draft.
-4. Choose whether to attach an AI image.
-5. Send the draft into the scheduler.
-6. Select the social platforms, date, and time.
-7. Review the dashboard to track progress.
-
-## Project Structure
+## Repository Structure
 
 ```text
 ai-scheduler/
-├─ backend/
-│  └─ server.ts
-├─ client/
-│  └─ src/
-│     ├─ components/
-│     └─ pages/
-└─ README.md
+├─ backend/       Express API, MongoDB models, integrations, and scheduler
+├─ client/        React and TypeScript frontend built with Vite
+└─ README.md      Project overview and quick start guide
 ```
 
-## Notes
+## Development Notes
 
-- The backend is currently minimal and ready for future API expansion.
-- The client uses mock data in parts of the UI, so it can be developed without a full production backend yet.
-- This makes the project a good base for building a more complete AI-assisted content scheduling platform.
+- The client still uses mock data in some screens while backend integration is being expanded.
+- The backend starts its scheduled publishing service when the server starts and checks for due posts every minute.
+- Do not commit backend `.env` files, API keys, JWT secrets, or other credentials.

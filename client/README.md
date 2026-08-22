@@ -22,54 +22,70 @@ export default defineConfig([
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+    # AI Scheduler Client
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+    The client is a React 19 single-page application built with TypeScript, Vite, Tailwind CSS, and React Router. It provides the landing page, authentication entry point, dashboard, AI composer, account management, and scheduling views.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    ## Requirements and Commands
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+    Install Node.js and npm, then run:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+    ```bash
+    npm install
+    npm run dev       # Start the Vite development server
+    npm run build     # Type-check and create a production build
+    npm run lint      # Run ESLint
+    npm run preview   # Preview the production build
+    ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    The client currently uses mock data in some screens. API integration should use the backend documented in `../backend/README.md`.
+
+    ## Routes
+
+    | Path | Component | Purpose |
+    | --- | --- | --- |
+    | `/` | `Home` | Public landing page |
+    | `/login` | `Login` | Sign in or register |
+    | `/dashboard` | `Dashboard` | Post metrics and recent activity |
+    | `/accounts` | `Accounts` | View and manage connected social accounts |
+    | `/ai-composer` | `AIComposer` | Write and generate social posts |
+    | `/schedule` | `Scheduler` | Select platforms and schedule content |
+
+    The four application routes are rendered inside `Layout`, which provides the shared app shell and sidebar.
+
+    ## Source Folders and Files
+
+    ```text
+    client/
+    ├─ public/                 Static files copied as-is by Vite
+    ├─ src/
+    │  ├─ assets/              Shared image, icon, and asset definitions
+    │  ├─ components/          Reusable UI components
+    │  │  └─ Home/             Landing-page sections: hero, features, pricing, CTA, footer, and navigation
+    │  ├─ pages/               Route-level screens for the public and authenticated workflows
+    │  ├─ App.tsx              React Router route configuration
+    │  ├─ index.css            Global styles and Tailwind entry styles
+    │  └─ main.tsx             React bootstrap, StrictMode, and BrowserRouter setup
+    ├─ index.html              Vite HTML entry document
+    ├─ vite.config.ts          Vite and React plugin configuration
+    ├─ eslint.config.js        ESLint configuration
+    ├─ tsconfig*.json           TypeScript configurations for app, Node, and build references
+    └─ package.json             Scripts and client dependencies
+    ```
+
+    Important reusable components include `Layout` (authenticated shell), `Sidebar` (application navigation), `AccountList` (account display), and `PlatformPickerModal` (platform selection).
+
+    ## Backend Integration
+
+    The backend defaults to `http://localhost:3000`. In development, start it separately from `../backend`, then call the API with the routes in the backend README. Store the JWT returned by login or registration and send it with protected requests:
+
+    ```http
+    Authorization: Bearer <token>
+    Content-Type: application/json
+    ```
+
+    The scheduler upload endpoint uses `multipart/form-data` when attaching an image or video. The Vite development server is configured in `vite.config.ts`; add a proxy there if browser requests need to be forwarded to the backend without cross-origin URLs.
+
+    ## Build Output
+
+    `npm run build` writes the deployable static site to `dist/`. `dist/` is generated output and should not be edited manually.
