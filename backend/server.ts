@@ -28,9 +28,6 @@ app.use("/api/accounts", accountRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/activity", activityRouter);
 
-// Initialize the scheduler: It will run every minute and check for posts that are scheduled to be published. 
-initScheduler();
-
 // Global error handler
 app.use(
   (
@@ -53,6 +50,9 @@ app.use(
 const startServer = async () => {
   try {
     await connectDB();
+
+    // Initialize the scheduler: It will run every minute and check for posts that are scheduled to be published. 
+    initScheduler();
 
     app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
