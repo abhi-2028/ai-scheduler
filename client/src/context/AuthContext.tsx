@@ -27,14 +27,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!storedUser) return null;
 
     try {
-      return JSON.parse(storedUser) as User;
+      const parsedUser = JSON.parse(storedUser) as
+        | User
+        | { data?: { user?: User } };
+
+      // Backward compatibility: older builds stored the whole API response.
+      if ('data' in parsedUser && parsedUser.data?.user) {
+        return parsedUser.data.user;
+      }
+
+      return parsedUser as User;
     } catch {
       return null;
     }
   });
 
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
+
+    if (storedToken) return storedToken;
+
+    // Backward compatibility: older builds could store token on wrapped user.
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) return null;
+
+    try {
+      const parsedUser = JSON.parse(storedUser) as {
+        data?: { token?: string };
+      };
+      return parsedUser.data?.token ?? null;
+    } catch {
+      return null;
+    }
   });
 
   const [isLoading] = useState(false);
