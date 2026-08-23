@@ -6,6 +6,7 @@ import {
   Wand2Icon,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({
   isOpen,
@@ -14,15 +15,9 @@ const Sidebar = ({
   isOpen: boolean;
   setIsOpen: (val: boolean) => void;
 }) => {
-  const { logout, user } = {
-    logout: () => {
-      window.location.href = '/';
-    },
-    user: {
-      name: 'Abhirup Biswas',
-      email: 'abhirup@example.com',
-    },
-  };
+  const { logout, user } = useAuth();
+
+  console.log(user);
 
   const location = useLocation();
 

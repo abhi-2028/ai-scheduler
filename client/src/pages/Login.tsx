@@ -26,18 +26,33 @@ export default function Login() {
           password,
         }
       );
-      login(data, data.token);
+      login(data?.data?.user, data?.data?.token);
       navigate('/dashboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || error?.message)
+    } catch (error: unknown) {
+      const messageFromApi =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response
+          ?.data?.message === 'string'
+          ? (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : null;
+
+      const message =
+        messageFromApi ||
+        (error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.');
+      toast.error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
-  useEffect( () => {
-    if(user) navigate('/dashboard')
-  }, [user])
+  useEffect(() => {
+    if (user) navigate('/dashboard');
+  }, [navigate, user]);
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
