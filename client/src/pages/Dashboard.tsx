@@ -7,12 +7,25 @@ import {
   SendIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { data } from 'react-router-dom';
 import {
   dummyAccountsData,
   dummyActivityData,
   dummyPostsData,
 } from '../assets/assets';
+
+interface Post {
+  status: string;
+}
+
+interface Account {
+  status: string;
+}
+
+interface Activity {
+  _id: string;
+  description: string;
+  createdAt: string;
+}
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -21,7 +34,7 @@ const Dashboard = () => {
     connectedAccounts: 0,
   });
 
-  const [activites, setActivities] = useState<any[]>([]);
+  const [activites, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -34,19 +47,23 @@ const Dashboard = () => {
 
         const posts = postsRes.data;
         setStats({
-          scheduled: posts.filter((p: any) => p.status === 'scheduled').length,
-          published: posts.filter((p: any) => p.status === 'published').length,
+          scheduled: posts.filter((p: Post) => p.status === 'scheduled').length,
+          published: posts.filter((p: Post) => p.status === 'published').length,
           connectedAccounts: accountsRes.data.filter(
-            (a: any) => a.status === 'published'
+            (a: Account) => a.status === 'published'
           ).length,
         });
         setActivities(activityRes.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching dashboard data: ', err);
       }
     };
 
-    fetchDashboardData();
+    const timer = window.setTimeout(() => {
+      void fetchDashboardData();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const statCards = [

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { dummyPostsData, PLATFORMS } from '../assets/assets';
 import {
   ArrowRightIcon,
@@ -9,8 +9,19 @@ import {
   XIcon,
 } from 'lucide-react';
 
+interface Post {
+  _id: string;
+  status: string;
+  content: string;
+  scheduledFor: string;
+  updatedAt: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  platforms: string[];
+}
+
 const Scheduler = () => {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [content, setContent] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -23,9 +34,11 @@ const Scheduler = () => {
   };
 
   useEffect(() => {
-    (async () => await fetchPosts())();
-    const interval = setInterval(async () => await fetchPosts(), 1000);
-    return () => clearInterval(interval);
+    const timer = window.setTimeout(() => {
+      void fetchPosts();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const scheduled = posts.filter((p) => p.status === 'scheduled');
@@ -36,7 +49,7 @@ const Scheduler = () => {
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
 
-  const handleSchedule = (async) => (e: React.FormEvent) => {
+  const handleSchedule = (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
@@ -180,7 +193,7 @@ const Scheduler = () => {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
+              {...(loading ? { disabled: true } : {})}
               className="w-full flex items-center justify-center gap-2
               py-3.5 bg-red-500 hover:bg-red-600 transition-all text-white rounded-lg"
             >

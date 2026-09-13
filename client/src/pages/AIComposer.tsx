@@ -11,15 +11,25 @@ import {
   XIcon,
 } from 'lucide-react';
 
+interface Generation {
+  _id: string;
+  prompt: string;
+  content: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  tone: string;
+  createdAt: string;
+}
+
 const AIComposer = () => {
   const [prompt, setPrompt] = useState('');
   const [tone, setTone] = useState('Professional');
   const [generateImage, setGenerateImage] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [generations, setGenerations] = useState<any[]>([]);
+  const [generations, setGenerations] = useState<Generation[]>([]);
 
   // Scheduling state
-  const [activeScheduler, setActiveScheduler] = useState<any>(null);
+  const [activeScheduler, setActiveScheduler] = useState<Generation | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [scheduledDate, setScheduledDate] = useState<string>('');
   const [scheduledTime, setScheduledTime] = useState<string>('');
@@ -30,7 +40,11 @@ const AIComposer = () => {
   };
 
   useEffect(() => {
-    fetchGenerations();
+    const timer = window.setTimeout(() => {
+      void fetchGenerations();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleGenerate = async () => {
@@ -84,7 +98,7 @@ const AIComposer = () => {
 
             <button
               onClick={handleGenerate}
-              disabled={loading}
+              {...(loading ? { disabled: true } : {})}
               className="bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 px-4 py-2 rounded-lg"
             >
               {loading ? (
