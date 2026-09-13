@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../api/axios';
+import { createContext, useContext, useState } from 'react';
 
 interface User {
   _id: string;
@@ -62,14 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [isLoading] = useState(false);
-
-  // useEffect(() => {
-  //   if (token) {
-  //     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  //   } else {
-  //     delete api.defaults.headers.common['Authorization'];
-  //   }
-  // }, [token]);
 
   const login = (userData: User, newToken: string) => {
     setUser(userData);

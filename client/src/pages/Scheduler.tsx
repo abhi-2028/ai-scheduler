@@ -1,6 +1,4 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { dummyPostsData, PLATFORMS } from '../assets/assets';
-import { useEffect, useState } from 'react';
 import { PLATFORMS } from '../assets/assets';
 import {
   ArrowRightIcon,
@@ -37,8 +35,8 @@ const Scheduler = () => {
     try {
       const allPosts  = await api.get('/api/posts');
       setPosts(allPosts.data.data ?? []);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load posts');
     }
   };
 
@@ -48,9 +46,6 @@ const Scheduler = () => {
     }, 0);
 
     return () => window.clearTimeout(timer);
-    (async () => await fetchPosts())();
-    const interval = setInterval(async () => await fetchPosts(), 10000);
-    return () => clearInterval(interval);
   }, []);
 
   const scheduled = posts.filter((p) => p.status === 'scheduled');
@@ -61,8 +56,7 @@ const Scheduler = () => {
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
 
-  const handleSchedule = (e: FormEvent) => {
-  const handleSchedule = async (e: React.FormEvent) => {
+  const handleSchedule = async (e: FormEvent) => {
     e.preventDefault();
     if (selectedPlatforms.length === 0) {
       toast.error('Select at least one platform !');
@@ -102,8 +96,8 @@ const Scheduler = () => {
       setSelectedPlatforms([]);
       setMediaFile(null);
       fetchPosts();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to schedule post');
     } finally {
       setLoading(false);
     }
@@ -274,7 +268,6 @@ const Scheduler = () => {
             <button
               type="submit"
               {...(loading ? { disabled: true } : {})}
-              disabled1={loading}
               className="w-full flex items-center justify-center gap-2
               py-3.5 bg-red-500 hover:bg-red-600 transition-all text-white rounded-lg"
             >
