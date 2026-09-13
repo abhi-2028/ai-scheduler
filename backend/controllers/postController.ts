@@ -169,7 +169,7 @@ export const updateGeneration = asyncHandler(async (req: AuthRequest, res: Respo
     const generation = await Generation.findOneAndUpdate(
         { _id: req.params.id, user: req.user?._id },
         { content },
-        { new: true, runValidators: true },
+        { returnDocument: "after", runValidators: true },
     );
 
     if (!generation) {
