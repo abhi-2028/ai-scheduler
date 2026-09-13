@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
+import { validateEnvironment } from "./config/env.js";
 
 import authRouter from "./routes/authRoutes.js";
 import socialAuthRouter from "./routes/socialAuthRoutes.js";
@@ -49,6 +50,7 @@ app.use(
 
 const startServer = async () => {
   try {
+    validateEnvironment();
     await connectDB();
 
     // Initialize the scheduler: It will run every minute and check for posts that are scheduled to be published. 

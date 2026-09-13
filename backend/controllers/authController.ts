@@ -5,9 +5,10 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getJwtSecret } from '../config/env.js';
 
 const genereateToken = (id: string) => {
-    return jwt.sign({id}, process.env.JWT_SECRET || "fallback_secret", {expiresIn: '30d'})
+  return jwt.sign({id}, getJwtSecret(), {expiresIn: '30d'})
 }
 
 // Register User

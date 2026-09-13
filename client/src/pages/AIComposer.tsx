@@ -32,6 +32,16 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return error instanceof Error ? error.message : fallback;
 };
 
+interface Generation {
+  _id: string;
+  prompt: string;
+  content: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  tone: string;
+  createdAt: string;
+}
+
 const AIComposer = () => {
   const [prompt, setPrompt] = useState('');
   const [tone, setTone] = useState('Professional');

@@ -4,9 +4,11 @@ The backend is a TypeScript Express API backed by MongoDB. It handles authentica
 
 ## Requirements and Commands
 
-Install Node.js and npm. Create a `.env` file in this folder, install dependencies, then run:
+Install Node.js and npm. Create `.env` from the checked-in template, install dependencies, then run:
 
 ```bash
+Copy-Item .env.example .env    # PowerShell
+# cp .env.example .env        # macOS/Linux
 npm install
 npm run start     # Start the API with tsx
 npm run server    # Start with nodemon for development
@@ -14,6 +16,8 @@ npm run build     # Compile TypeScript to dist/
 ```
 
 The server listens on `PORT` or port `3000`. It connects to MongoDB before listening. The root health response is available at `GET /` and returns `Server is Live!`.
+
+Startup fails when `JWT_SECRET` or `MONGODB_URI` is missing. Use a long random value for `JWT_SECRET`; never use a fallback or commit `.env`.
 
 ## Environment Variables
 

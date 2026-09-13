@@ -1,6 +1,6 @@
 import { MenuIcon } from 'lucide-react';
 import Sidebar from '../components/Sidebar.tsx';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 

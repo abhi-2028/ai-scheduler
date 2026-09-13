@@ -1,3 +1,5 @@
+import { type FormEvent, useEffect, useState } from 'react';
+import { dummyPostsData, PLATFORMS } from '../assets/assets';
 import { useEffect, useState } from 'react';
 import { PLATFORMS } from '../assets/assets';
 import {
@@ -11,8 +13,19 @@ import {
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
+interface Post {
+  _id: string;
+  status: string;
+  content: string;
+  scheduledFor: string;
+  updatedAt: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  platforms: string[];
+}
+
 const Scheduler = () => {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [content, setContent] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -30,6 +43,11 @@ const Scheduler = () => {
   };
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchPosts();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
     (async () => await fetchPosts())();
     const interval = setInterval(async () => await fetchPosts(), 10000);
     return () => clearInterval(interval);
@@ -43,6 +61,7 @@ const Scheduler = () => {
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
 
+  const handleSchedule = (e: FormEvent) => {
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedPlatforms.length === 0) {
@@ -254,6 +273,7 @@ const Scheduler = () => {
             {/* Submit */}
             <button
               type="submit"
+              {...(loading ? { disabled: true } : {})}
               disabled1={loading}
               className="w-full flex items-center justify-center gap-2
               py-3.5 bg-red-500 hover:bg-red-600 transition-all text-white rounded-lg"

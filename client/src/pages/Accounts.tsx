@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { PLATFORMS } from '../assets/assets';
 import { PlusIcon } from 'lucide-react';
-import AccountList from '../components/AccountList';
+import AccountList, { type Account } from '../components/AccountList';
 import PlatformPickerModal from '../components/PlatformPickerModal';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
 
@@ -48,6 +48,11 @@ const Accounts = () => {
   };
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchAccounts();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
     const params = new URLSearchParams(window.location.search);
     const connectedPlatforms = params.get('connected');
     const connectedUsername = params.get('username');

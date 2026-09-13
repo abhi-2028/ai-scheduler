@@ -7,6 +7,11 @@ import {
   SendIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import {
+  dummyAccountsData,
+  dummyActivityData,
+  dummyPostsData,
+} from '../assets/assets';
 import api from '../api/axios';
 
 interface DashboardPost {
@@ -24,6 +29,20 @@ interface ActivityItem {
   createdAt: string;
 }
 
+interface Post {
+  status: string;
+}
+
+interface Account {
+  status: string;
+}
+
+interface Activity {
+  _id: string;
+  description: string;
+  createdAt: string;
+}
+
 const Dashboard = () => {
   const [stats, setStats] = useState({
     scheduled: 0,
@@ -31,6 +50,7 @@ const Dashboard = () => {
     connectedAccounts: 0,
   });
 
+  const [activites, setActivities] = useState<Activity[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
@@ -46,6 +66,15 @@ const Dashboard = () => {
         const accounts = (accountsRes.data.data ?? []) as DashboardAccount[];
         const activity = (activityRes.data.data ?? []) as ActivityItem[];
         setStats({
+          scheduled: posts.filter((p: Post) => p.status === 'scheduled').length,
+          published: posts.filter((p: Post) => p.status === 'published').length,
+          connectedAccounts: accountsRes.data.filter(
+            (a: Account) => a.status === 'published'
+          ).length,
+        });
+        setActivities(activityRes.data);
+      } catch (err: unknown) {
+        console.error('Error fetching dashboard data: ', err);
           scheduled: posts.filter((post) => post.status === 'scheduled').length,
           published: posts.filter((post) => post.status === 'published').length,
           connectedAccounts: accounts.filter(
@@ -58,7 +87,11 @@ const Dashboard = () => {
       }
     };
 
-    fetchDashboardData();
+    const timer = window.setTimeout(() => {
+      void fetchDashboardData();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const statCards = [

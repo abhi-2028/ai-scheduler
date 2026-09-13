@@ -6,8 +6,15 @@ import {
 } from 'lucide-react';
 import { PLATFORMS } from '../assets/assets';
 
+export interface Account {
+  _id: string;
+  handle: string;
+  platform: string;
+  status: string;
+}
+
 interface AccountListProp {
-  accounts: any[];
+  accounts: Account[];
   onDisconnect: (accountId: string) => Promise<void>;
 }
 
