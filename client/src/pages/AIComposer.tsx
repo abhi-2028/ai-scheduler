@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { dummyGenerationData, PLATFORMS } from '../assets/assets';
+import { PLATFORMS } from '../assets/assets';
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -10,6 +10,27 @@ import {
   Wand2Icon,
   XIcon,
 } from 'lucide-react';
+import axios from 'axios';
+import api from '../api/axios';
+import toast from 'react-hot-toast';
+
+type Generation = {
+  _id: string;
+  prompt: string;
+  content: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+  tone: string;
+  createdAt: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message ?? fallback;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+};
 
 interface Generation {
   _id: string;
@@ -33,10 +54,15 @@ const AIComposer = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [scheduledDate, setScheduledDate] = useState<string>('');
   const [scheduledTime, setScheduledTime] = useState<string>('');
-  const [Scheduling, setScheduling] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
 
   const fetchGenerations = async () => {
-    setGenerations(dummyGenerationData);
+    try {
+      const { data } = await api.get('/api/posts/generations');
+      setGenerations(data.data ?? []);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to fetch generations'));
+    }
   };
 
   useEffect(() => {
@@ -48,18 +74,80 @@ const AIComposer = () => {
   }, []);
 
   const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast.error('Please enter a prompt to generate content.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const { data } = await api.post('/api/posts/generate', {
+        prompt,
+        tone,
+        generateImage,
+      });
+      const generation: Generation = data.data;
+      setGenerations((current) => [generation, ...current]);
+      setActiveScheduler(generation);
+      toast.success('Content generated successfully!');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to generate content.'));
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleSchedule = async () => {
+    if (!activeScheduler) return;
+    if (selectedPlatforms.length === 0) {
+      toast.error("Please select at least one platform to schedule the post.");
+      return;
+    }
+    if (!scheduledDate || !scheduledTime) {
+      toast.error("Please select a valid date and time for scheduling.");
+      return;
+    }
+    const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
     setScheduling(true);
-    setTimeout(() => {
-      setScheduling(false);
+    try {
+      await api.post('/api/posts', {
+        content: activeScheduler.content,
+        mediaUrl: activeScheduler.mediaUrl,
+        mediaType: activeScheduler.mediaType,
+        platforms: selectedPlatforms,
+        scheduledFor,
+        status: 'scheduled',
+      });
+      toast.success('AI Post scheduled!');
       setActiveScheduler(null);
-    }, 2000);
+      setSelectedPlatforms([]);
+      setScheduledDate('');
+      setScheduledTime('');
+      fetchGenerations(); // Refresh the generations list after scheduling
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to schedule the post.'));
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const saveGenerationContent = async (generationId: string, content: string) => {
+    try {
+      const { data } = await api.patch(`/api/posts/generations/${generationId}`, {
+        content,
+      });
+      const savedGeneration: Generation = data.data;
+      setGenerations((current) =>
+        current.map((generation) =>
+          generation._id === savedGeneration._id ? savedGeneration : generation
+        )
+      );
+      setActiveScheduler((current) =>
+        current?._id === savedGeneration._id ? savedGeneration : current
+      );
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to save your changes.'));
+    }
   };
 
   const tones = ['Professional', 'creative', 'Funny', 'Minimalist', 'Excited'];
@@ -73,7 +161,7 @@ const AIComposer = () => {
         </h1>
         <div className="relative group mt-12">
           <textarea
-            className="w-full px-6 py-6 bg-white border border-slate-300 rounded-x1 text-slate-900 placeholder-slate-400 outline-none Ifocus : border-slate-400 transition resize-none h-40"
+            className="h-40 w-full resize-none rounded-xl border border-slate-300 bg-white px-6 py-6 text-slate-900 placeholder-slate-400 outline-none transition focus:border-slate-400"
             placeholder="Share your idea... (e.g. A post about the launch of our new eco-friendly coffee beans)"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -90,7 +178,7 @@ const AIComposer = () => {
               >
                 <span
                   className={`pointer-events-none size-4 transform translate-y-0.5 rounded-full bg-white transition ${
-                    generateImage ? 'translate-x-4.5' : 'translate-x-0.5'
+                    generateImage ? 'translate-x-4' : 'translate-x-0.5'
                   }`}
                 />
               </div>
@@ -165,7 +253,7 @@ const AIComposer = () => {
                   <div>
                     <img
                       src={gen.mediaUrl}
-                      alt="gen"
+                      alt="Generated post artwork"
                       className="w-full aspect-video object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                     />
                   </div>
@@ -223,9 +311,37 @@ const AIComposer = () => {
 
               {/* Generated Content */}
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-4">
-                <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
-                  {activeScheduler.content}
-                </p>
+                <label
+                  htmlFor="generated-content"
+                  className="block text-xs font-semibold uppercase tracking-widest text-slate-500"
+                >
+                  Edit generated post
+                </label>
+                <textarea
+                  rows={15}
+                  id="generated-content"
+                  value={activeScheduler.content}
+                  onChange={(event) => {
+                    const content = event.target.value;
+                    setActiveScheduler((current) =>
+                      current ? { ...current, content } : current
+                    );
+                    setGenerations((current) =>
+                      current.map((generation) =>
+                        generation._id === activeScheduler._id
+                          ? { ...generation, content }
+                          : generation
+                      )
+                    );
+                  }}
+                  onBlur={() =>
+                    void saveGenerationContent(
+                      activeScheduler._id,
+                      activeScheduler.content
+                    )
+                  }
+                  className="min-h-36 w-full resize-y rounded-xl border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-800 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                />
 
                 {activeScheduler.mediaUrl && (
                   <img
@@ -299,7 +415,7 @@ const AIComposer = () => {
                 onClick={handleSchedule}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-md bg-slate-200 text-slate-700 hover:bg-red-500 hover:text-white transition"
               >
-                {Scheduling ? (
+                {scheduling ? (
                   <Loader2Icon className="size-4 animate-spin" />
                 ) : (
                   <TimerIcon className="size-4" />

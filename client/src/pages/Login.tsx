@@ -116,6 +116,7 @@ export default function Login() {
             <button
               type="submit"
               {...(loading ? { disabled: true } : {})}
+              disabled1={loading}
               className="w-full py-2.5 px-4 bg-linear-to-r from-red-600 to-red-500 text-white rounded-full text-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? (

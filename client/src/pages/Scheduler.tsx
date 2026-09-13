@@ -1,5 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { dummyPostsData, PLATFORMS } from '../assets/assets';
+import { useEffect, useState } from 'react';
+import { PLATFORMS } from '../assets/assets';
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
@@ -8,6 +10,8 @@ import {
   SendIcon,
   XIcon,
 } from 'lucide-react';
+import api from '../api/axios';
+import toast from 'react-hot-toast';
 
 interface Post {
   _id: string;
@@ -30,7 +34,12 @@ const Scheduler = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchPosts = async () => {
-    setPosts(dummyPostsData);
+    try {
+      const allPosts  = await api.get('/api/posts');
+      setPosts(allPosts.data.data ?? []);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
   };
 
   useEffect(() => {
@@ -39,6 +48,9 @@ const Scheduler = () => {
     }, 0);
 
     return () => window.clearTimeout(timer);
+    (async () => await fetchPosts())();
+    const interval = setInterval(async () => await fetchPosts(), 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const scheduled = posts.filter((p) => p.status === 'scheduled');
@@ -50,21 +62,89 @@ const Scheduler = () => {
     );
 
   const handleSchedule = (e: FormEvent) => {
+  const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedPlatforms.length === 0) {
+      toast.error('Select at least one platform !');
+      return;
+    }
+    if (!scheduledDate || !scheduledTime) {
+      toast.error('Select date and time');
+      return;
+    }
+    if (selectedPlatforms.includes('instagram') && !mediaFile) {
+      toast.error('Instagram requires an image or video');
+      return;
+    }
+
+    const scheduledFor = new Date(
+      `${scheduledDate}T${scheduledTime}`
+    ).toISOString();
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('scheduledFor', scheduledFor);
+    formData.append('status', 'scheduled');
+    formData.append('platform', JSON.stringify(selectedPlatforms));
+
+    if (mediaFile) formData.append('media', mediaFile);
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await api.post('/api/posts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success('Post scheduled!');
+      setContent('');
+      setScheduledDate('');
+      setScheduledTime('');
+      setSelectedPlatforms([]);
+      setMediaFile(null);
+      fetchPosts();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
       setLoading(false);
-      setPosts((prev) => [...prev, dummyPostsData[0]]);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-red-500">
+            Content workflow
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+            Schedule your next post
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Compose once, choose your channels, and let SocialAI handle the timing.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span className="rounded-full bg-slate-100 px-3 py-1.5">
+            {scheduled.length} upcoming
+          </span>
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700">
+            {published.length} published
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
       {/* Conpose panel */}
-      <div className="w-full lg:w-[460px] shrink-0">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <h2 className="text-lg text-slate-700">Compose Post</h2>
+      <div className="min-w-0">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-6 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">Compose Post</h3>
+              <p className="mt-1 text-sm text-slate-400">
+                Prepare the content and publishing details.
+              </p>
+            </div>
+            <CalendarDaysIcon className="size-5 text-red-500" />
           </div>
 
           <form className="space-y-5" onSubmit={handleSchedule}>
@@ -167,7 +247,7 @@ const Scheduler = () => {
                   <input
                     type="date"
                     required
-                    className="w-full pl-10 pr-4 py2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none"
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                   />
@@ -182,7 +262,7 @@ const Scheduler = () => {
                   <input
                     type="time"
                     required
-                    className="w-full pl-10 pr-4 py2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
                   />
@@ -194,18 +274,18 @@ const Scheduler = () => {
             <button
               type="submit"
               {...(loading ? { disabled: true } : {})}
+              disabled1={loading}
               className="w-full flex items-center justify-center gap-2
               py-3.5 bg-red-500 hover:bg-red-600 transition-all text-white rounded-lg"
             >
               {loading ? (
                 <>
-                  <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin">
-                    Scheduling...
-                  </div>
+                  <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Scheduling...</span>
                 </>
               ) : (
                 <>
-                  Schedule Post
+                  <span>Schedule Post</span>
                   <ArrowRightIcon className="size-4" />
                 </>
               )}
@@ -215,12 +295,15 @@ const Scheduler = () => {
       </div>
 
       {/* Queue Panels */}
-      <div className="flex-1 flex flex-col gap-6 min-w-0">
+      <div className="flex min-w-0 flex-col gap-6">
         {/* Upcoming */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 px-5 py-4">
             <CalendarDaysIcon className="size-4 text-zinc-500" />
-            <h3 className="text-slate-900 text-sm">Upcoming</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Upcoming</h3>
+              <p className="text-xs text-slate-400">Posts waiting to be published</p>
+            </div>
             <span className="ml-auto text-xs font-bold bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full">
               {scheduled.length}
             </span>
@@ -270,10 +353,13 @@ const Scheduler = () => {
         </div>
 
         {/* Published */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 px-5 py-4">
             <SendIcon className="size-4 text-zinc-500" />
-            <h3 className="text-slate-900 text-sm">Published</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Published</h3>
+              <p className="text-xs text-slate-400">Posts successfully sent to your channels</p>
+            </div>
             <span className="ml-auto text-xs font-bold bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full">
               {published.length}
             </span>
@@ -311,7 +397,9 @@ const Scheduler = () => {
                       <span className="text-xs text-slate-400">
                         {new Date(post.updatedAt).toLocaleString()}
                       </span>
-                      <span className='text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full'>Published</span>
+                      <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">
+                        Published
+                      </span>
                     </div>
                   </div>
                   <p className="text-sm text-slate-500 line-clamp-2 max-w-4/5">
@@ -322,7 +410,7 @@ const Scheduler = () => {
             )}
           </div>
         </div>
-
+      </div>
       </div>
     </div>
   );

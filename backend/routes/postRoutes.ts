@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { protect } from "../middlewares/authMiddleware.js";
-import { generatePost, getGenerations, getPosts, schedulePost } from "../controllers/postController.js";
+import { generatePost, getGenerations, getPosts, schedulePost, updateGeneration } from "../controllers/postController.js";
 import upload from "../config/multer.js";
 
 const postRouter = Router();
@@ -9,7 +9,8 @@ const postRouter = Router();
 postRouter.use(protect);
 postRouter.get('/', getPosts);
 postRouter.get('/generations', getGenerations);
-postRouter.post('/', upload.single('image'), schedulePost);
+postRouter.patch('/generations/:id', updateGeneration);
+postRouter.post('/', upload.single('media'), schedulePost);
 postRouter.post('/generate', generatePost)
 
 export default postRouter;

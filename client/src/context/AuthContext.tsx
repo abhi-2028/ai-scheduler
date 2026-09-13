@@ -63,13 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isLoading] = useState(false);
 
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
+  // useEffect(() => {
+  //   if (token) {
+  //     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  //   } else {
+  //     delete api.defaults.headers.common['Authorization'];
+  //   }
+  // }, [token]);
 
   const login = (userData: User, newToken: string) => {
     setUser(userData);

@@ -12,6 +12,22 @@ import {
   dummyActivityData,
   dummyPostsData,
 } from '../assets/assets';
+import api from '../api/axios';
+
+interface DashboardPost {
+  status: string;
+}
+
+interface DashboardAccount {
+  status: string;
+}
+
+interface ActivityItem {
+  _id: string;
+  actionType?: string;
+  description: string;
+  createdAt: string;
+}
 
 interface Post {
   status: string;
@@ -35,17 +51,20 @@ const Dashboard = () => {
   });
 
   const [activites, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [postsRes, accountsRes, activityRes] = [
-          { data: dummyPostsData },
-          { data: dummyAccountsData },
-          { data: dummyActivityData },
-        ];
+        const [postsRes, accountsRes, activityRes] = await Promise.all([
+          api.get('/api/posts'),
+          api.get('/api/accounts'),
+          api.get('/api/activity'),
+        ]);
 
-        const posts = postsRes.data;
+        const posts = (postsRes.data.data ?? []) as DashboardPost[];
+        const accounts = (accountsRes.data.data ?? []) as DashboardAccount[];
+        const activity = (activityRes.data.data ?? []) as ActivityItem[];
         setStats({
           scheduled: posts.filter((p: Post) => p.status === 'scheduled').length,
           published: posts.filter((p: Post) => p.status === 'published').length,
@@ -56,6 +75,15 @@ const Dashboard = () => {
         setActivities(activityRes.data);
       } catch (err: unknown) {
         console.error('Error fetching dashboard data: ', err);
+          scheduled: posts.filter((post) => post.status === 'scheduled').length,
+          published: posts.filter((post) => post.status === 'published').length,
+          connectedAccounts: accounts.filter(
+            (account) => account.status === 'connected'
+          ).length,
+        });
+        setActivities(activity);
+      } catch (error) {
+        console.error('Error fetching dashboard data: ', error);
       }
     };
 
@@ -88,50 +116,58 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full max-w-7xl space-y-8">
       {/* Welcome bar */}
       <div>
-        <h2 className="text-2xl text-slate-900">Good Morning! </h2>
-        <p className="text-slate-500 text-sm mt-0.5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-red-500">
+          Overview
+        </p>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+          Good Morning!
+        </h2>
+        <p className="mt-1 text-sm text-slate-500">
           Here's what's happening with your social accounts today.
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="bg-white hover:bg-red-50 relative border border-slate-200 rounded-2xl p-5 hover:border-red-200 transition-all"
+            className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-red-200 hover:bg-red-50"
           >
-            <div className="flexd items-center justify-between mb-4">
-              <div className="text-3xl font-medium text-slate-800 tabular-nums">
+            <div className="mb-4 flex items-start justify-between">
+              <div className="text-3xl font-semibold tabular-nums text-slate-800">
                 {card.value}
               </div>
 
-              <div className="text-xs absolute right-4 top-4 text-red-500 flex items-center gap-1">
+              <div className="flex items-center gap-1 text-xs text-red-500">
                 <TrendingUpIcon className="size-3" />
                 {card.trend}
               </div>
             </div>
 
-            <p className="text-sm text-slate-500 mt-1">{card.label}</p>
+            <p className="text-sm text-slate-500">{card.label}</p>
           </div>
         ))}
       </div>
 
       {/* Activity Feed */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-slate-900">Recent Activity</h2>
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div>
+            <h2 className="font-semibold text-slate-900">Recent Activity</h2>
+            <p className="mt-1 text-xs text-slate-400">Your latest publishing events</p>
+          </div>
           <span className="text-sm text-slate-400">
-            {activites.length} events
+            {activities.length} events
           </span>
         </div>
 
-        {activites.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-6">
-            <div className="size-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
+        {activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-6 py-16">
+            <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-slate-100">
               <ActivityIcon className="size-6 text-slate-400" />
             </div>
             <p className="text-slate-500">No activity yet</p>
@@ -141,18 +177,18 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
-            {activites.map((activity) => (
+            {activities.map((activity) => (
               <div
                 key={activity._id}
-                className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
+                className="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-slate-50/50"
               >
                 <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-zinc-100 text-zinc-600">
                   <SendIcon className="size-4" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
-                      Published
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
+                      {activity.actionType?.replaceAll('_', ' ').toLowerCase() || 'Activity'}
                     </span>
                     <span className="text-xs text-slate-400 shrink-0">
                       {new Date(activity.createdAt).toLocaleString()}
