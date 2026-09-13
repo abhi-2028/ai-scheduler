@@ -8,6 +8,7 @@ import axios from "axios";
 import { cloudinary } from "../config/cloudinary.js";
 import { Generation } from "../models/generation.model.js";
 import { Post } from "../models/post.model.js";
+import zernio from "../config/zernio.js";
 
 // Helper to poll Leonardo API for image generation status
 const pollLeonardoJob = async (generationId: string, apiKey: string): Promise<string> => {
@@ -46,6 +47,22 @@ const pollLeonardoJob = async (generationId: string, apiKey: string): Promise<st
     throw new ApiError(500, "Image generation timed out");
 }
 
+const uploadMediaToZernio = async (
+    buffer: Buffer,
+    filename: string,
+    contentType: string,
+): Promise<string> => {
+    const { data: presignedUpload } = await zernio.media.getMediaPresignedUrl({
+        body: { filename, contentType },
+    });
+
+    await axios.put(presignedUpload.uploadUrl, buffer, {
+        headers: { "Content-Type": contentType },
+    });
+
+    return presignedUpload.publicUrl;
+};
+
 // Generate Post
 // POST /api/posts/generate
 export const generatePost = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
@@ -61,7 +78,7 @@ export const generatePost = asyncHandler(async (req: AuthRequest, res: Response)
     const ai = new GoogleGenAI({ apiKey });
 
     const textResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
         contents: `Generate a social media post based on the following prompt: "${prompt}". The tone of the post should be "${tone}".
         Include relevant hashtags and emojis. The post should be engaging and suitable for social media platforms.
         Format the response as JSON with "content" and "imagePrompt" fields. The "content" field should contain the generated post text, and the "imagePrompt" field should contain a prompt for generating an image if "generateImage" is true. If "generateImage" is false, set "imagePrompt" to null.`,
@@ -140,6 +157,28 @@ export const getGenerations = asyncHandler(async (req: AuthRequest, res: Respons
     res.json(new ApiResponse(200, generations, "Generations fetched successfully"));
 });
 
+// Update generated post content
+// PATCH /api/posts/generations/:id
+export const updateGeneration = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const { content } = req.body;
+
+    if (typeof content !== "string" || !content.trim()) {
+        throw new ApiError(400, "Post content is required.");
+    }
+
+    const generation = await Generation.findOneAndUpdate(
+        { _id: req.params.id, user: req.user?._id },
+        { content },
+        { new: true, runValidators: true },
+    );
+
+    if (!generation) {
+        throw new ApiError(404, "Generated post not found.");
+    }
+
+    res.json(new ApiResponse(200, generation, "Generated post updated successfully"));
+});
+
 // Get Posts
 // GET /api/posts
 export const getPosts = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
@@ -162,28 +201,37 @@ export const schedulePost = asyncHandler(async (req: AuthRequest, res: Response)
         }
     }
 
+    if (!Array.isArray(parsedPlatforms) || parsedPlatforms.length === 0) {
+        throw new ApiError(400, "At least one platform is required.");
+    }
+
     let mediaUrl: string | undefined = req.body.mediaUrl;
     let mediaType: "image" | "video" | undefined = req.body.mediaType;
 
     if(req.file) {
-        const result = await new Promise<any>((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({
-                    resource_type: "auto",
-                    folder: "social-scheduler", 
-                }, (error, result) => {
-                    if(error) reject(error);
-                    else resolve(result);
-                });
-            stream.end(req.file!.buffer);
-        })
-        mediaUrl = result.secure_url;
-        mediaType = result.resource_type === "image" ? "image" : "video";
+        mediaUrl = await uploadMediaToZernio(
+            req.file.buffer,
+            req.file.originalname,
+            req.file.mimetype,
+        );
+        mediaType = req.file.mimetype.startsWith("image/") ? "image" : "video";
+    } else if (mediaUrl) {
+        const mediaResponse = await axios.get<ArrayBuffer>(mediaUrl, {
+            responseType: "arraybuffer",
+        });
+        const filename = new URL(mediaUrl).pathname.split("/").pop() || "generated-media";
+        const contentType = mediaType === "video" ? "video/mp4" : "image/jpeg";
+        mediaUrl = await uploadMediaToZernio(
+            Buffer.from(mediaResponse.data),
+            filename,
+            contentType,
+        );
     }
 
     const post = await Post.create({
         user: req.user?._id,
         content,
-        platform: parsedPlatforms,
+        platforms: parsedPlatforms,
         mediaUrl,
         mediaType,
         scheduledFor,
