@@ -7,12 +7,7 @@ import {
   SendIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { data } from 'react-router-dom';
-import {
-  dummyAccountsData,
-  dummyActivityData,
-  dummyPostsData,
-} from '../assets/assets';
+import api from '../api/axios';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -26,11 +21,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [postsRes, accountsRes, activityRes] = [
-          { data: dummyPostsData },
-          { data: dummyAccountsData },
-          { data: dummyActivityData },
-        ];
+        const [postsRes, accountsRes, activityRes] = await Promise.all([api.get("/api/post"), api.get('/api/accounts'), api.get("/api/activity")])
 
         const posts = postsRes.data;
         setStats({
